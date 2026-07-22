@@ -1,6 +1,8 @@
 import urllib.parse
 import pandas as pd
 import streamlit as st
+import requests
+import io
 import google.generativeai as genai
 
 # Streamlit Page Setup
@@ -9,15 +11,20 @@ st.set_page_config(page_title="Cambridge Automision", page_icon="🏫", layout="
 st.title("🏫 Cambridge Automision")
 st.caption("AI-Powered Smart School Management & Automated Parent Communication System")
 
-# Function to Load Sheet Directly via Direct Export URL
-@st.cache_data(ttl=1)
+# Function to Load Sheet directly via Published CSV Link with Request Headers
+@st.cache_data(ttl=5)
 def load_data():
-    sheet_id = "1vSnC8YeuGYiEwSFHlusp378ualxbOrrMMYJpH8WxsA"
-    url = f"https://docs.google.com/spreadsheets/d/{sheet_id}/export?format=csv&gid=0"
+    url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSnC8YeuGYiEwSFHlusp378ualxbOrrMMYJpH8WxsASpWQ1rWoc2HP-bVwAmpBd2dCMmisRPwZy7sV/pub?gid=0&single=true&output=csv"
+    headers = {"User-Agent": "Mozilla/5.0"}
     
     try:
-        df = pd.read_csv(url)
-        return df
+        response = requests.get(url, headers=headers)
+        if response.status_code == 200:
+            df = pd.read_csv(io.StringIO(response.text))
+            return df
+        else:
+            st.error(f"Failed to fetch data. HTTP Status Code: {response.status_code}")
+            return pd.DataFrame()
     except Exception as e:
         st.error(f"Error loading Google Sheet: {e}")
         return pd.DataFrame()
