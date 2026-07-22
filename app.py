@@ -19,28 +19,28 @@ def load_data():
         df = pd.read_csv(url)
         return df
     except Exception as e:
-        st.error(f"گوگل شیٹ سے ڈیٹا لوڈ نہیں ہو سکا: {e}")
+        st.error(f"Error loading Google Sheet: {e}")
         return pd.DataFrame()
 
 df = load_data()
 
-tab1, tab2, tab3 = st.tabs(["📊 ڈیش بورڈ (Dashboard)", "📋 اٹینڈنس اور الرٹس (Attendance & Alerts)", "🤖 AI اسمارٹ ڈائری (AI Smart Diary)"])
+tab1, tab2, tab3 = st.tabs(["📊 Dashboard", "📋 Attendance & Alerts", "🤖 AI Smart Diary"])
 
 # TAB 1: DASHBOARD
 with tab1:
-    st.header("مجموعی جائزہ (System Overview)")
+    st.header("System Overview")
     if not df.empty:
         col1, col2 = st.columns(2)
-        col1.metric("کل ریکارڈز (Total Records)", len(df))
+        col1.metric("Total Records", len(df))
         
-        st.subheader("طلباء کی فہرست (Student Master List)")
+        st.subheader("Student Master List")
         st.dataframe(df, use_container_width=True)
     else:
-        st.info("ڈیٹا لوڈ ہو رہا ہے...")
+        st.info("Loading Data from Google Sheet...")
 
 # TAB 2: ATTENDANCE & WHATSAPP
 with tab2:
-    st.header("حاضری اور واٹس ایپ نوٹیفکیشن")
+    st.header("Attendance & WhatsApp Notification")
     if not df.empty:
         student_col = df.columns[0]
         for col in df.columns:
@@ -48,10 +48,10 @@ with tab2:
                 student_col = col
                 break
                 
-        selected_student = st.selectbox("طالب علم منتخب کریں:", df[student_col].dropna().unique())
+        selected_student = st.selectbox("Select Student:", df[student_col].dropna().unique())
         student_info = df[df[student_col] == selected_student].iloc[0]
         
-        status = st.radio("حاضری کی صورتحال:", ["Present", "Absent"])
+        status = st.radio("Attendance Status:", ["Present", "Absent"])
         
         if status == "Absent":
             phone_col = df.columns[1] if len(df.columns) > 1 else df.columns[0]
@@ -63,30 +63,30 @@ with tab2:
             phone = str(student_info.get(phone_col, '')).replace(".0", "").replace("+", "").strip()
             student_name = str(student_info[student_col])
             
-            # Clean Urdu WhatsApp Message
-            msg = "محترم والدین، آپ کا بچہ " + student_name + " آج اسکول سے غیر حاضر ہے۔ برائے مہربانی اطلاع دیں۔ - Cambridge High School"
+            # Clean WhatsApp Message String
+            msg = f"Respected Parent, your child {student_name} is ABSENT today. Please inform the reason. - Cambridge High School"
             encoded_msg = urllib.parse.quote(msg)
-            whatsapp_url = "https://wa.me/" + phone + "?text=" + encoded_msg
+            whatsapp_url = f"https://wa.me/{phone}?text={encoded_msg}"
             
-            st.warning("طالب علم غیر حاضر ہے!")
-            st.markdown(f"[📲 والدین کو واٹس ایپ میسج بھیجیں]({whatsapp_url})", unsafe_allow_html=True)
+            st.warning("Student is Marked ABSENT!")
+            st.markdown(f"[📲 Send WhatsApp Message to Parent]({whatsapp_url})", unsafe_allow_html=True)
 
 # TAB 3: AI SMART DIARY
 with tab3:
-    st.header("🤖 AI اسمارٹ ڈائری جنریٹر")
-    st.write("ٹیچر کا لکھا ہوا شارٹ نوٹ AI کی مدد سے والدین کے لیے ایک بہترین پروفیشنل ڈائری میسج میں تبدیل کریں۔")
+    st.header("🤖 AI Smart Diary Generator")
+    st.write("Convert short teacher notes into professional parent messages using Gemini AI.")
     
     try:
         genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
         model = genai.GenerativeModel('gemini-1.5-flash')
         
-        subject = st.selectbox("مضمون (Subject):", ["Math", "English", "Urdu", "Science", "General Notice"])
-        raw_notes = st.text_area("کلاس نوٹس یا ہوم ورک درج کریں:", placeholder="مثلاً: Math Exercise 5.1 Q1 to Q5 done. Home work is Q6.")
+        subject = st.selectbox("Subject:", ["Math", "English", "Urdu", "Science", "General Notice"])
+        raw_notes = st.text_area("Enter Class Notes / Homework:", placeholder="e.g. Math Exercise 5.1 Q1 to Q5 done. Homework is Q6.")
         
-        if st.button("✨ AI ڈائری میسج جنریٹ کریں"):
+        if st.button("✨ Generate AI Diary Message"):
             if raw_notes:
                 system_prompt = f"""
-                You are an expert school coordinator. Convert the following teacher's raw daily notes into a polite, professional, and clear WhatsApp message for parents in Urdu/English mix (Roman Urdu/Urdu).
+                You are an expert school coordinator. Convert the following teacher's raw daily notes into a polite, professional, and clear WhatsApp message for parents in Roman Urdu / English.
                 
                 Subject: {subject}
                 Raw Note: {raw_notes}
@@ -94,11 +94,11 @@ with tab3:
                 Make it structured with emojis, clear homework instructions, and polite greeting from Cambridge High School.
                 """
                 
-                with st.spinner("AI میسج تیار کر رہا ہے..."):
+                with st.spinner("AI is generating message..."):
                     response = model.generate_content(system_prompt)
-                    st.success("AI ڈائری میسج تیار ہے!")
+                    st.success("AI Message Ready!")
                     st.code(response.text, language="markdown")
             else:
-                st.warning("برائے مہربانی پہلے نوٹس درج کریں۔")
+                st.warning("Please enter some notes first.")
     except Exception as e:
-        st.error("Gemini API Key سیٹ نہیں ہے۔ Streamlit Secrets میں GEMINI_API_KEY اینٹر کریں۔")
+        st.error("Gemini API Key is missing! Please set GEMINI_API_KEY in Streamlit Secrets.")
