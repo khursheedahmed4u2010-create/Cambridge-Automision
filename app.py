@@ -11,10 +11,11 @@ st.set_page_config(page_title="Cambridge Automision", page_icon="🏫", layout="
 st.title("🏫 Cambridge Automision")
 st.caption("AI-Powered Smart School Management & Automated Parent Communication System")
 
-# Function to Load Sheet directly via Published CSV Link with Request Headers
-@st.cache_data(ttl=5)
+# Function to Load Sheet directly using standard export URL
+@st.cache_data(ttl=1)
 def load_data():
-    url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSnC8YeuGYiEwSFHlusp378ualxbOrrMMYJpH8WxsASpWQ1rWoc2HP-bVwAmpBd2dCMmisRPwZy7sV/pub?gid=0&single=true&output=csv"
+    sheet_id = "1vSnC8YeuGYiEwSFHlusp378ualxbOrrMMYJpH8WxsA"
+    url = f"https://docs.google.com/spreadsheets/d/{sheet_id}/export?format=csv&gid=0"
     headers = {"User-Agent": "Mozilla/5.0"}
     
     try:
@@ -24,6 +25,7 @@ def load_data():
             return df
         else:
             st.error(f"Failed to fetch data. HTTP Status Code: {response.status_code}")
+            st.info("💡 Solution: Google Sheet mein Share button par click karke access 'Anyone with the link' kar dein.")
             return pd.DataFrame()
     except Exception as e:
         st.error(f"Error loading Google Sheet: {e}")
