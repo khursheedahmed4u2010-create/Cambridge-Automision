@@ -9,11 +9,11 @@ st.title("🏫 Cambridge Automision")
 st.caption("AI-Powered Smart School Management & Automated Parent Communication System")
 
 # Function to Load Sheet Directly via CSV URL
-@st.cache_data(ttl=30)
+@st.cache_data(ttl=10)
 def load_data():
     try:
-        # Google Sheet CSV URL
-        url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSnC8YeuGYiEwSFHlusp378ualxbOrrMMYJpH8WxsASpWQ1rWoc2HP-bVwAmpBd2dCMmisRPwZy7sV/pub?gid=0&single=true&output=csv"
+        # Exact Google Sheet CSV Link
+        url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSnC8YeuGYiEwSFHlusp378ualxbOrrMMYJpH8WxsASpWQ1rWoc2HP-bVwAmpBd2dCMmisRPwZy7sV/pub?output=csv"
         df = pd.read_csv(url)
         return df
     except Exception as e:
@@ -29,7 +29,7 @@ with tab1:
     st.header("مجموعی جائزہ (System Overview)")
     if not df.empty:
         col1, col2, col3 = st.columns(3)
-        col1.metric("کل طلباء (Total Students)", len(df))
+        col1.metric("کل ریکارڈز (Total Records)", len(df))
         
         st.subheader("طلباء کی فہرست (Student Master List)")
         st.dataframe(df, use_container_width=True)
@@ -40,14 +40,26 @@ with tab1:
 with tab2:
     st.header("حاضری اور واٹس ایپ نوٹیفکیشن")
     if not df.empty:
-        student_col = 'Student_Name' if 'Student_Name' in df.columns else df.columns[0]
+        # Dynamic Column Matching
+        student_col = df.columns[0]
+        for col in df.columns:
+            if 'student' in str(col).lower() or 'name' in str(col).lower():
+                student_col = col
+                break
+                
         selected_student = st.selectbox("طالب علم منتخب کریں:", df[student_col].dropna().unique())
         student_info = df[df[student_col] == selected_student].iloc[0]
         
         status = st.radio("حاضری کی صورتحال:", ["Present", "Absent"])
         
         if status == "Absent":
-            phone = str(student_info.get('Parent_Phone', '')).replace(".0", "").replace("+", "").strip()
+            phone_col = df.columns[1] if len(df.columns) > 1 else df.columns[0]
+            for col in df.columns:
+                if 'phone' in str(col).lower() or 'mobile' in str(col).lower() or 'parent' in str(col).lower():
+                    phone_col = col
+                    break
+            
+            phone = str(student_info.get(phone_col, '')).replace(".0", "").replace("+", "").strip()
             msg = f"محترم والدین، آپ کا بچہ {student_info[student_col]} آج اسکول سے غیر حاضر ہے۔ برائے مہربانی اطلاع دیں۔ - Cambridge High School"
             whatsapp_url = f"https://wa.me/{phone}?text={msg.replace(' ', '%20')}"
             
