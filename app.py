@@ -1,5 +1,6 @@
-import streamlit as st
+import urllib.parse
 import pandas as pd
+import streamlit as st
 import google.generativeai as genai
 
 # Streamlit Page Setup
@@ -11,7 +12,6 @@ st.caption("AI-Powered Smart School Management & Automated Parent Communication 
 # Function to Load Sheet Directly via Direct Export URL
 @st.cache_data(ttl=1)
 def load_data():
-    # Direct export link using Sheet ID and Students_Master tab (gid=0)
     sheet_id = "1vSnC8YeuGYiEwSFHlusp378ualxbOrrMMYJpH8WxsA"
     url = f"https://docs.google.com/spreadsheets/d/{sheet_id}/export?format=csv&gid=0"
     
@@ -61,8 +61,12 @@ with tab2:
                     break
             
             phone = str(student_info.get(phone_col, '')).replace(".0", "").replace("+", "").strip()
-            msg = f"محترم والدین، آپ کا بچہ {student_info[student_col]} آج اسکول سے غیر حاضر ہے۔ برائے مہربانی اطلاع دیں۔ - Cambridge High School"
-            whatsapp_url = f"https://wa.me/{phone}?text={msg.replace(' ', '%20')}"
+            student_name = str(student_info[student_col])
+            
+            # Clean Urdu WhatsApp Message
+            msg = "محترم والدین، آپ کا بچہ " + student_name + " آج اسکول سے غیر حاضر ہے۔ برائے مہربانی اطلاع دیں۔ - Cambridge High School"
+            encoded_msg = urllib.parse.quote(msg)
+            whatsapp_url = "https://wa.me/" + phone + "?text=" + encoded_msg
             
             st.warning("طالب علم غیر حاضر ہے!")
             st.markdown(f"[📲 والدین کو واٹس ایپ میسج بھیجیں]({whatsapp_url})", unsafe_allow_html=True)
