@@ -8,17 +8,26 @@ st.set_page_config(page_title="Cambridge Automision", page_icon="🏫", layout="
 st.title("🏫 Cambridge Automision")
 st.caption("AI-Powered Smart School Management & Automated Parent Communication System")
 
-# Function to Load Sheet Directly via CSV URL
+# Function to Load Sheet directly via standard sheet ID
 @st.cache_data(ttl=10)
 def load_data():
+    # Regular Google Sheet ID from your URL
+    sheet_id = "1vSnC8YeuGYiEwSFHlusp378ualxbOrrMMYJpH8WxsA"
+    
+    # Direct export link format that bypasses 404 errors
+    url = f"https://docs.google.com/spreadsheets/d/{sheet_id}/export?format=csv"
+    
     try:
-        # Exact Google Sheet CSV Link
-        url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSnC8YeuGYiEwSFHlusp378ualxbOrrMMYJpH8WxsASpWQ1rWoc2HP-bVwAmpBd2dCMmisRPwZy7sV/pub?output=csv"
         df = pd.read_csv(url)
         return df
     except Exception as e:
-        st.error(f"گوگل شیٹ سے ڈیٹا لوڈ نہیں ہو سکا: {e}")
-        return pd.DataFrame()
+        # Fallback to pub link
+        try:
+            pub_url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSnC8YeuGYiEwSFHlusp378ualxbOrrMMYJpH8WxsASpWQ1rWoc2HP-bVwAmpBd2dCMmisRPwZy7sV/pub?output=csv"
+            return pd.read_csv(pub_url)
+        except Exception:
+            st.error(f"گوگل شیٹ سے ڈیٹا لوڈ نہیں ہو سکا: {e}")
+            return pd.DataFrame()
 
 df = load_data()
 
@@ -40,7 +49,6 @@ with tab1:
 with tab2:
     st.header("حاضری اور واٹس ایپ نوٹیفکیشن")
     if not df.empty:
-        # Dynamic Column Matching
         student_col = df.columns[0]
         for col in df.columns:
             if 'student' in str(col).lower() or 'name' in str(col).lower():
