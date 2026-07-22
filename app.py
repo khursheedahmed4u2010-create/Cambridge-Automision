@@ -8,10 +8,13 @@ st.set_page_config(page_title="Cambridge Automision", page_icon="🏫", layout="
 st.title("🏫 Cambridge Automision")
 st.caption("AI-Powered Smart School Management & Automated Parent Communication System")
 
-# Function to Load Sheet Directly via CSV URL
+# Function to Load Sheet Directly via Direct Export URL
 @st.cache_data(ttl=1)
 def load_data():
-    url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSnC8YeuGYiEwSFHlusp378ualxbOrrMMYJpH8WxsASpWQ1rWoc2HP-bVwAmpBd2dCMmisRPwZy7sV/pub?gid=0&single=true&output=csv"
+    # Direct export link using Sheet ID and Students_Master tab (gid=0)
+    sheet_id = "1vSnC8YeuGYiEwSFHlusp378ualxbOrrMMYJpH8WxsA"
+    url = f"https://docs.google.com/spreadsheets/d/{sheet_id}/export?format=csv&gid=0"
+    
     try:
         df = pd.read_csv(url)
         return df
